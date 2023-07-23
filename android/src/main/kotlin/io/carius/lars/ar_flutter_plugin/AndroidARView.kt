@@ -281,6 +281,14 @@ internal class AndroidARView(
                                 cloudAnchorHandler.resolveCloudAnchor(anchorId, cloudAnchorDownloadedListener())
                             }
                         }
+                        "getCameraImage" -> {
+                            val imageMap = getCameraImage()
+                            result.success(imageMap)
+                        }
+                        "getDepthImage" -> {
+                            val imageMap = getDepthImage()
+                            result.success(imageMap)
+                        }
                         else -> {}
                     }
                 }
@@ -871,6 +879,53 @@ internal class AndroidARView(
             anchorNode.setParent(null)
         }
     }
+
+    private fun getCameraImage(): HashMap<String, Any>? {
+        val arFrame = arSceneView.arFrame ?: return null
+
+        val cameraImage: Image = arFrame.acquireCameraImage()
+        val buffer = cameraImage.planes[0].buffer
+        val bytes = ByteArray(buffer.remaining())
+        buffer[bytes]
+
+        val imageMap = hashMapOf<String, Any>(
+            "bytes" to bytes,
+            "width" to cameraImage.width,
+            "height" to cameraImage.height
+        )
+
+        cameraImage.close()
+
+        return imageMap
+    }
+
+    private fun getDepthImage(): HashMap<String, Any>? {
+        val arFrame = arSceneView.arFrame ?: return null
+
+        val depthImage: ArImage
+        try {
+            depthImage = arFrame.acquireDepthImage()
+        } catch (e: UnavailableException) {
+            // Handle the exception. It could be that the device does not support depth images
+            return null
+        }
+
+        val buffer = depthImage.planes[0].buffer
+        val bytes = ByteArray(buffer.remaining())
+        buffer.get(bytes)
+
+        val imageMap = hashMapOf<String, Any>(
+            "bytes" to bytes,
+            "width" to depthImage.width,
+            "height" to depthImage.height
+        )
+
+        depthImage.close()
+
+        return imageMap
+    }
+
+
 
     private inner class cloudAnchorUploadedListener: CloudAnchorHandler.CloudAnchorListener {
         override fun onCloudTaskComplete(anchorName: String?, anchor: Anchor?) {

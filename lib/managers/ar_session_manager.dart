@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:vector_math/vector_math_64.dart';
 
+import '../models/ar_image.dart';
+
 // Type definitions to enforce a consistent use of the API
 typedef ARHitResultHandler = void Function(List<ARHitTestResult> hits);
 
@@ -101,6 +103,20 @@ class ARSessionManager {
     num dz = vector1.z - vector2.z;
     double distance = sqrt(dx * dx + dy * dy + dz * dz);
     return distance;
+  }
+
+  /// Returns the camera image
+  Future<ArImage> getCameraImage() async {
+      final Map<dynamic, dynamic> result =
+      await _channel.invokeMethod('getCameraImage');
+      return ArImage.fromMap(result);
+  }
+
+  /// Returns the depth image
+  Future<ArImage> getDepthImage() async {
+      final Map<dynamic, dynamic> result =
+      await _channel.invokeMethod('getDepthImage');
+      return ArImage.fromMap(result);
   }
 
   Future<void> _platformCallHandler(MethodCall call) {
