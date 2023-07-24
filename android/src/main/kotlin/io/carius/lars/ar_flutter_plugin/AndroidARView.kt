@@ -41,6 +41,8 @@ import android.view.ViewGroup
 
 import com.google.ar.core.TrackingState
 
+import utils.ImageUtils
+
 
 
 
@@ -885,9 +887,7 @@ internal class AndroidARView(
         val arFrame = arSceneView.arFrame ?: return null
 
         val cameraImage: Image = arFrame.acquireCameraImage()
-        val buffer = cameraImage.planes[0].buffer
-        val bytes = ByteArray(buffer.remaining())
-        buffer[bytes]
+        val bytes = ImageUtil.imageToByteArray(cameraImage)
 
         val imageMap = hashMapOf<String, Any>(
             "bytes" to bytes,
@@ -903,16 +903,26 @@ internal class AndroidARView(
     private fun getDepthImage(): HashMap<String, Any>? {
         val arFrame = arSceneView.arFrame ?: return null
 
-        val depthImage: Image = arFrame.acquireDepthImage()
+        val depthImage: ArImage = arFrame.acquireDepthImage() as ArImage
+
+        val array = DepthImgUtil().parseImg(depthImage)
 
         val buffer = depthImage.planes[0].buffer
+        val stride = depthImage.planes[0].rowStride
         val bytes = ByteArray(buffer.remaining())
         buffer.get(bytes)
 
         val imageMap = hashMapOf<String, Any>(
             "bytes" to bytes,
             "width" to depthImage.width,
-            "height" to depthImage.height
+            "height" to depthImage.height,
+            "depthImgArrays" to mapOf(
+                "xBuffer" to array.xBuffer.map { it.toInt() },
+                "yBuffer" to array.yBuffer.map { it.toInt() },
+                "dBuffer" to array.dBuffer.toList(),
+                "percentageBuffer" to array.percentageBuffer.toList(),
+                "length" to array.length
+            ),
         )
 
         depthImage.close()
