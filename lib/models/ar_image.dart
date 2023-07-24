@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
-class ArImage {
-  ArImage({
+class ARImage {
+  ARImage({
     this.bytes,
     this.width,
     this.height,
@@ -13,8 +13,8 @@ class ArImage {
   final int? width;
   final int? height;
 
-  static ArImage fromMap(Map<dynamic, dynamic> map) {
-    return ArImage(
+  static ARImage fromMap(Map<dynamic, dynamic> map) {
+    return ARImage(
       bytes: map['bytes'],
       width: map['width'],
       height: map['height'],

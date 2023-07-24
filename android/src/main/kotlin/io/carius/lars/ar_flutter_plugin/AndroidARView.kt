@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
+import android.media.Image
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -902,13 +903,7 @@ internal class AndroidARView(
     private fun getDepthImage(): HashMap<String, Any>? {
         val arFrame = arSceneView.arFrame ?: return null
 
-        val depthImage: ArImage
-        try {
-            depthImage = arFrame.acquireDepthImage()
-        } catch (e: UnavailableException) {
-            // Handle the exception. It could be that the device does not support depth images
-            return null
-        }
+        val depthImage: Image = arFrame.acquireDepthImage()
 
         val buffer = depthImage.planes[0].buffer
         val bytes = ByteArray(buffer.remaining())

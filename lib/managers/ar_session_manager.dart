@@ -106,17 +106,17 @@ class ARSessionManager {
   }
 
   /// Returns the camera image
-  Future<ArImage> getCameraImage() async {
+  Future<ARImage> getCameraImage() async {
       final Map<dynamic, dynamic> result =
       await _channel.invokeMethod('getCameraImage');
-      return ArImage.fromMap(result);
+      return ARImage.fromMap(result);
   }
 
   /// Returns the depth image
-  Future<ArImage> getDepthImage() async {
+  Future<ARImage> getDepthImage() async {
       final Map<dynamic, dynamic> result =
       await _channel.invokeMethod('getDepthImage');
-      return ArImage.fromMap(result);
+      return ARImage.fromMap(result);
   }
 
   Future<void> _platformCallHandler(MethodCall call) {
