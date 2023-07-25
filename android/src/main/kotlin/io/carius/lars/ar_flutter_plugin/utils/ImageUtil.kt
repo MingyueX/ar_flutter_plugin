@@ -56,17 +56,17 @@ class ImageUtil {
         check(pixelStride == image.planes[1].pixelStride)
 
         if (pixelStride == 2 && rowStride == width && uBuffer.get(0) == vBuffer.get(1)) {
-            val savePixel = vBuffer.get(1)
+            val savePixel = vBuffer.get(1).toInt()
             try {
-                vBuffer.put(1, (~savePixel).toByte())
-                if (uBuffer.get(0) == (~savePixel).toByte()) {
-                    vBuffer.put(1, savePixel)
+                vBuffer.put(1, (~savePixel and 0xFF).toByte())
+                if (uBuffer.get(0) == (~savePixel and 0xFF).toByte()) {
+                    vBuffer.put(1, savePixel.toByte())
                     vBuffer.get(nv21, ySize, uvSize)
 
                     Log.i("AMELIA", "I'm taking a shortcut in image parsing")
                     return nv21 // shortcut
                 }
-                vBuffer.put(1, savePixel)
+                vBuffer.put(1, savePixel.toByte())
             } catch (ex: Exception) {
                 ex.printStackTrace()
             }
