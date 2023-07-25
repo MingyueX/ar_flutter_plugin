@@ -63,7 +63,7 @@ class ImageUtil {
             val savePixel = vBuffer.get(1)
             try {
                 val invertedSavePixel = (savePixel.toInt() xor 0xFF).toByte()  // invert the byte
-                vBufferCopy(1, invertedSavePixel)
+                vBufferCopy.put(1, invertedSavePixel)
                 if (uBuffer.get(0) == invertedSavePixel) {
                     vBufferCopy.put(1, savePixel)
                     vBufferCopy.get(nv21, ySize, uvSize)
