@@ -55,19 +55,23 @@ class ImageUtil {
         check(rowStride == image.planes[1].rowStride)
         check(pixelStride == image.planes[1].pixelStride)
 
+        val vBufferCopy = ByteArray(vBuffer.remaining()) // Create a byte array
+        vBuffer.get(vBufferCopy) // Copy the data from the vBuffer
+        vBuffer.rewind()
+
         if (pixelStride == 2 && rowStride == width && uBuffer.get(0) == vBuffer.get(1)) {
             val savePixel = vBuffer.get(1)
             try {
                 val invertedSavePixel = (savePixel.toInt() xor 0xFF).toByte()  // invert the byte
-                vBuffer.put(1, invertedSavePixel)
+                vBufferCopy(1, invertedSavePixel)
                 if (uBuffer.get(0) == invertedSavePixel) {
-                    vBuffer.put(1, savePixel)
-                    vBuffer.get(nv21, ySize, uvSize)
+                    vBufferCopy.put(1, savePixel)
+                    vBufferCopy.get(nv21, ySize, uvSize)
 
                     // Log.i("AMELIA", "I'm taking a shortcut in image parsing")
                     // return nv21 // shortcut
                 }
-                vBuffer.put(1, savePixel)
+                vBufferCopy.put(1, savePixel)
             } catch (ex: Exception) {
                 ex.printStackTrace()
             }
@@ -75,7 +79,7 @@ class ImageUtil {
             for (row in 0 until height / 2) {
                 for (col in 0 until width / 2) {
                     val vuPos = col * pixelStride + row * rowStride
-                    nv21[pos++] = vBuffer.get(vuPos)
+                    nv21[pos++] = vBufferCopy.get(vuPos)
                     nv21[pos++] = uBuffer.get(vuPos)
                 }
             }
