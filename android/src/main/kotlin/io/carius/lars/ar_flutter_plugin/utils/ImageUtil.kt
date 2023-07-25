@@ -56,17 +56,18 @@ class ImageUtil {
         check(pixelStride == image.planes[1].pixelStride)
 
         if (pixelStride == 2 && rowStride == width && uBuffer.get(0) == vBuffer.get(1)) {
-            val savePixel = vBuffer.get(1).toInt()
+            val savePixel = vBuffer.get(1)
             try {
-                vBuffer.put(1, (~savePixel and 0xFF).toByte())
-                if (uBuffer.get(0) == (~savePixel and 0xFF).toByte()) {
-                    vBuffer.put(1, savePixel.toByte())
+                val invertedSavePixel = (savePixel.toInt() xor 0xFF).toByte()  // invert the byte
+                vBuffer.put(1, invertedSavePixel)
+                if (uBuffer.get(0) == invertedSavePixel) {
+                    vBuffer.put(1, savePixel)
                     vBuffer.get(nv21, ySize, uvSize)
 
-                    Log.i("AMELIA", "I'm taking a shortcut in image parsing")
-                    return nv21 // shortcut
+                    // Log.i("AMELIA", "I'm taking a shortcut in image parsing")
+                    // return nv21 // shortcut
                 }
-                vBuffer.put(1, savePixel.toByte())
+                vBuffer.put(1, savePixel)
             } catch (ex: Exception) {
                 ex.printStackTrace()
             }
