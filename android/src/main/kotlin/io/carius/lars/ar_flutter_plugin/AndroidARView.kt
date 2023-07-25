@@ -41,7 +41,8 @@ import android.view.ViewGroup
 
 import com.google.ar.core.TrackingState
 
-import utils.ImageUtils
+import DepthImgUtil
+import ImageUtil
 
 
 
@@ -887,7 +888,7 @@ internal class AndroidARView(
         val arFrame = arSceneView.arFrame ?: return null
 
         val cameraImage: Image = arFrame.acquireCameraImage()
-        val bytes = ImageUtil.imageToByteArray(cameraImage)
+        val bytes = ImageUtil().imageToByteArray(cameraImage) ?: byteArrayOf()
 
         val imageMap = hashMapOf<String, Any>(
             "bytes" to bytes,
