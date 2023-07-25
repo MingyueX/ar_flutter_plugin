@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 import '../models/ar_image.dart';
+import '../models/camera_image.dart';
 
 // Type definitions to enforce a consistent use of the API
 typedef ARHitResultHandler = void Function(List<ARHitTestResult> hits);
@@ -106,10 +107,10 @@ class ARSessionManager {
   }
 
   /// Returns the camera image
-  Future<ARImage> getCameraImage() async {
+  Future<CameraImage> getCameraImage() async {
       final Map<dynamic, dynamic> result =
       await _channel.invokeMethod('getCameraImage');
-      return ARImage.fromMap(result);
+      return CameraImage.fromMap(result);
   }
 
   /// Returns the depth image
