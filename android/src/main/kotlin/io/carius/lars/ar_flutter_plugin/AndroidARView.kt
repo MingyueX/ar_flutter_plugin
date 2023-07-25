@@ -153,6 +153,14 @@ internal class AndroidARView(
                         "dispose" -> {
                             dispose()
                         }
+                        "getCameraImage" -> {
+                            val imageMap = getCameraImage()
+                            result.success(imageMap)
+                        }
+                        "getDepthImage" -> {
+                            val imageMap = getDepthImage()
+                            result.success(imageMap)
+                        }
                         else -> {}
                     }
                 }
@@ -284,14 +292,6 @@ internal class AndroidARView(
                             anchorId?.let {
                                 cloudAnchorHandler.resolveCloudAnchor(anchorId, cloudAnchorDownloadedListener())
                             }
-                        }
-                        "getCameraImage" -> {
-                            val imageMap = getCameraImage()
-                            result.success(imageMap)
-                        }
-                        "getDepthImage" -> {
-                            val imageMap = getDepthImage()
-                            result.success(imageMap)
                         }
                         else -> {}
                     }
