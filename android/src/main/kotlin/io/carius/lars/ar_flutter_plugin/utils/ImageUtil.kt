@@ -63,15 +63,16 @@ class ImageUtil {
             val savePixel = vBuffer.get(1)
             try {
                 val invertedSavePixel = (savePixel.toInt() xor 0xFF).toByte()  // invert the byte
-                vBufferCopy.put(1, invertedSavePixel)
+                vBufferCopy[1] = invertedSavePixel
                 if (uBuffer.get(0) == invertedSavePixel) {
-                    vBufferCopy.put(1, savePixel)
-                    vBufferCopy.get(nv21, ySize, uvSize)
+                    vBufferCopy[1] = savePixel
+                    System.arraycopy(vBufferCopy, 0, nv21, ySize, uvSize)
+                    // vBufferCopy.get(nv21, ySize, uvSize)
 
                     // Log.i("AMELIA", "I'm taking a shortcut in image parsing")
                     // return nv21 // shortcut
                 }
-                vBufferCopy.put(1, savePixel)
+                vBufferCopy[1] = savePixel
             } catch (ex: Exception) {
                 ex.printStackTrace()
             }
@@ -79,7 +80,7 @@ class ImageUtil {
             for (row in 0 until height / 2) {
                 for (col in 0 until width / 2) {
                     val vuPos = col * pixelStride + row * rowStride
-                    nv21[pos++] = vBufferCopy.get(vuPos)
+                    nv21[pos++] = vBufferCopy[vuPos]
                     nv21[pos++] = uBuffer.get(vuPos)
                 }
             }
