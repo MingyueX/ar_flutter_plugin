@@ -15,7 +15,6 @@ import android.view.PixelCopy
 import android.view.View
 import android.widget.Toast
 import com.google.ar.core.*
-import com.google.ar.core.ArImage
 import com.google.ar.core.exceptions.*
 import com.google.ar.sceneform.*
 import com.google.ar.sceneform.math.Vector3
@@ -906,7 +905,7 @@ internal class AndroidARView(
     private fun getDepthImage(): HashMap<String, Any>? {
         val arFrame = arSceneView.arFrame ?: return null
 
-        val depthImage: ArImage = arFrame.acquireDepthImage() as ArImage
+        val depthImage: Image = arFrame.acquireDepthImage()
 
         val array = DepthImgUtil().parseImg(depthImage)
 
