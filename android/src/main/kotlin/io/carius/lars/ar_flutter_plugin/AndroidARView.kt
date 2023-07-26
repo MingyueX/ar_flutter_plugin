@@ -411,6 +411,7 @@ internal class AndroidARView(
                     val config = Config(session)
                     config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
                     config.focusMode = Config.FocusMode.AUTO
+                    config.depthMode = Config.DepthMode.AUTOMATIC
                     session.configure(config)
                     arSceneView.setupSession(session)
                 }
