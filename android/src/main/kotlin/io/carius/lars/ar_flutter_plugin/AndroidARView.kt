@@ -15,6 +15,7 @@ import android.view.PixelCopy
 import android.view.View
 import android.widget.Toast
 import com.google.ar.core.*
+import com.google.ar.core.ArImage
 import com.google.ar.core.exceptions.*
 import com.google.ar.sceneform.*
 import com.google.ar.sceneform.math.Vector3
