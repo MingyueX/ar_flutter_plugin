@@ -906,9 +906,9 @@ internal class AndroidARView(
         val arFrame = arSceneView.arFrame ?: return null
 
         try {
-            arFrame.acquireDepthImage16Bits().use<Image> { depth ->
-                arFrame.acquireRawDepthImage16Bits().use<Image> { rawDepth ->
-                    arFrame.acquireRawDepthConfidenceImage().use<Image> { rawDepthConfidence ->
+            arFrame.acquireDepthImage16Bits().use { depth ->
+                arFrame.acquireRawDepthImage16Bits().use { rawDepth ->
+                    arFrame.acquireRawDepthConfidenceImage().use { rawDepthConfidence ->
                         val thisFrameHasNewDepthData = arFrame.timestamp == rawDepth.timestamp
                         if (thisFrameHasNewDepthData) {
                             val depthData = depth.planes[0].buffer
