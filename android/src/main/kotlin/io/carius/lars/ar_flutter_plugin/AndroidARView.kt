@@ -903,68 +903,77 @@ internal class AndroidARView(
     }
 
     private fun getDepthImage(): HashMap<String, Any>? {
-        val arFrame = arSceneView.getArFrame() ?: return null
+        val maxRetries = 5
+        var currentRetry = 0
 
-        try {
-            arFrame.acquireDepthImage16Bits().use { depth ->
-                arFrame.acquireRawDepthImage16Bits().use { rawDepth ->
-                    arFrame.acquireRawDepthConfidenceImage().use { rawDepthConfidence ->
-                        val thisFrameHasNewDepthData = arFrame.timestamp == rawDepth.timestamp
-                        if (thisFrameHasNewDepthData) {
-                            val depthData = depth.planes[0].buffer
-                            val rawDepthData = rawDepth.planes[0].buffer
-                            val confidenceData = rawDepthConfidence.planes[0].buffer
+        while (currentRetry < maxRetries) {
+            val arFrame = arSceneView.arFrame ?: return null
 
-                            val array = DepthImgUtil().parseImg(depth)
-                            val rawArray = DepthImgUtil().parseImg(rawDepth)
-                            val confidenceArray = DepthImgUtil().parseImg(rawDepthConfidence)
+            try {
+                arFrame.acquireDepthImage16Bits().use { depth ->
+                    arFrame.acquireRawDepthImage16Bits().use { rawDepth ->
+                        arFrame.acquireRawDepthConfidenceImage().use { rawDepthConfidence ->
+                            val thisFrameHasNewDepthData = arFrame.timestamp == rawDepth.timestamp
+                            if (thisFrameHasNewDepthData) {
+                                val depthData = depth.planes[0].buffer
+                                val rawDepthData = rawDepth.planes[0].buffer
+                                val confidenceData = rawDepthConfidence.planes[0].buffer
 
-                            val depthBytes = ByteArray(depthData.remaining())
-                            depthData.get(depthBytes)
+                                val array = DepthImgUtil().parseImg(depth)
+                                val rawArray = DepthImgUtil().parseImg(rawDepth)
+                                val confidenceArray = DepthImgUtil().parseImg(rawDepthConfidence)
 
-                            val rawDepthBytes = ByteArray(rawDepthData.remaining())
-                            rawDepthData.get(rawDepthBytes)
+                                val depthBytes = ByteArray(depthData.remaining())
+                                depthData.get(depthBytes)
 
-                            val confidenceBytes = ByteArray(confidenceData.remaining())
-                            confidenceData.get(confidenceBytes)
+                                val rawDepthBytes = ByteArray(rawDepthData.remaining())
+                                rawDepthData.get(rawDepthBytes)
 
-                            val imageMap = hashMapOf<String, Any>(
-                                "depthImgBytes" to depthBytes,
-                                "rawDepthImgBytes" to rawDepthBytes,
-                                "confidenceImgBytes" to confidenceBytes,
-                                "width" to depth.width,
-                                "height" to depth.height,
-                                "depthImgArrays" to mapOf(
-                                    "xBuffer" to array.xBuffer.map { it.toInt() },
-                                    "yBuffer" to array.yBuffer.map { it.toInt() },
-                                    "dBuffer" to array.dBuffer.toList(),
-                                    "percentageBuffer" to array.percentageBuffer.toList(),
-                                    "length" to array.length
-                                ),
-                                "rawDepthImgArrays" to mapOf(
-                                    "xBuffer" to rawArray.xBuffer.map { it.toInt() },
-                                    "yBuffer" to rawArray.yBuffer.map { it.toInt() },
-                                    "dBuffer" to rawArray.dBuffer.toList(),
-                                    "percentageBuffer" to rawArray.percentageBuffer.toList(),
-                                    "length" to rawArray.length
-                                ),
-                                "confidenceImgArrays" to mapOf(
-                                    "xBuffer" to confidenceArray.xBuffer.map { it.toInt() },
-                                    "yBuffer" to confidenceArray.yBuffer.map { it.toInt() },
-                                    "dBuffer" to confidenceArray.dBuffer.toList(),
-                                    "percentageBuffer" to confidenceArray.percentageBuffer.toList(),
-                                    "length" to confidenceArray.length
+                                val confidenceBytes = ByteArray(confidenceData.remaining())
+                                confidenceData.get(confidenceBytes)
+
+                                val imageMap = hashMapOf<String, Any>(
+                                    "depthImgBytes" to depthBytes,
+                                    "rawDepthImgBytes" to rawDepthBytes,
+                                    "confidenceImgBytes" to confidenceBytes,
+                                    "width" to depth.width,
+                                    "height" to depth.height,
+                                    "depthImgArrays" to mapOf(
+                                        "xBuffer" to array.xBuffer.map { it.toInt() },
+                                        "yBuffer" to array.yBuffer.map { it.toInt() },
+                                        "dBuffer" to array.dBuffer.toList(),
+                                        "percentageBuffer" to array.percentageBuffer.toList(),
+                                        "length" to array.length
+                                    ),
+                                    "rawDepthImgArrays" to mapOf(
+                                        "xBuffer" to rawArray.xBuffer.map { it.toInt() },
+                                        "yBuffer" to rawArray.yBuffer.map { it.toInt() },
+                                        "dBuffer" to rawArray.dBuffer.toList(),
+                                        "percentageBuffer" to rawArray.percentageBuffer.toList(),
+                                        "length" to rawArray.length
+                                    ),
+                                    "confidenceImgArrays" to mapOf(
+                                        "xBuffer" to confidenceArray.xBuffer.map { it.toInt() },
+                                        "yBuffer" to confidenceArray.yBuffer.map { it.toInt() },
+                                        "dBuffer" to confidenceArray.dBuffer.toList(),
+                                        "percentageBuffer" to confidenceArray.percentageBuffer.toList(),
+                                        "length" to confidenceArray.length
+                                    )
                                 )
-                            )
-                            return imageMap
+                                return imageMap
+                            }
                         }
                     }
                 }
+            } catch (e: NotYetAvailableException) {
+                Log.e(TAG, "Depth image not available. Retry $currentRetry of $maxRetries")
+                Thread.sleep(500)
+                currentRetry++
             }
-        } catch (e: NotYetAvailableException) {
-            Log.e(TAG, "Depth image is not yet available. This normally means that depth data is not available for this frame.")
-            sessionManagerChannel.invokeMethod("onError", listOf("Depth image is not yet available. This normally means that depth data is not available for this frame."))
         }
+
+        Log.e(TAG, "Failed to acquire depth image after $maxRetries retries.")
+        return null
     }
 
     private inner class cloudAnchorUploadedListener: CloudAnchorHandler.CloudAnchorListener {
