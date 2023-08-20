@@ -905,34 +905,64 @@ internal class AndroidARView(
     private fun getDepthImage(): HashMap<String, Any>? {
         val arFrame = arSceneView.arFrame ?: return null
 
-        val depthImage: Image = arFrame.acquireDepthImage()
+        try {
+            arFrame.acquireDepthImage16Bits().use { depth ->
+                arFrame.acquireRawDepthImage16Bits().use { rawDepth ->
+                    arFrame.acquireRawDepthConfidenceImage().use { rawDepthConfidence ->
+                        val thisFrameHasNewDepthData = arFrame.timestamp == rawDepth.timestamp
+                        if (thisFrameHasNewDepthData) {
+                            val depthData = depth.planes[0].buffer
+                            val rawDepthData = rawDepth.planes[0].buffer
+                            val confidenceData = rawDepthConfidence.planes[0].buffer
 
-        val array = DepthImgUtil().parseImg(depthImage)
+                            val depthBytes = ByteArray(depthData.remaining())
+                            depthData.get(depthBytes)
 
-        val buffer = depthImage.planes[0].buffer
-        val stride = depthImage.planes[0].rowStride
-        val bytes = ByteArray(buffer.remaining())
-        buffer.get(bytes)
+                            val rawDepthBytes = ByteArray(rawDepthData.remaining())
+                            rawDepthData.get(rawDepthBytes)
 
-        val imageMap = hashMapOf<String, Any>(
-            "bytes" to bytes,
-            "width" to depthImage.width,
-            "height" to depthImage.height,
-            "depthImgArrays" to mapOf(
-                "xBuffer" to array.xBuffer.map { it.toInt() },
-                "yBuffer" to array.yBuffer.map { it.toInt() },
-                "dBuffer" to array.dBuffer.toList(),
-                "percentageBuffer" to array.percentageBuffer.toList(),
-                "length" to array.length
-            ),
-        )
+                            val confidenceBytes = ByteArray(confidenceData.remaining())
+                            confidenceData.get(confidenceBytes)
 
-        depthImage.close()
-
-        return imageMap
+                            val imageMap = hashMapOf<String, Any>(
+                                "depthImgBytes" to depthBytes,
+                                "rawDepthImgBytes" to rawDepthBytes,
+                                "confidenceImgBytes" to confidenceBytes,
+                                "width" to depth.width,
+                                "height" to depth.height,
+                                "depthImgArrays" to mapOf(
+                                    "xBuffer" to array.xBuffer.map { it.toInt() },
+                                    "yBuffer" to array.yBuffer.map { it.toInt() },
+                                    "dBuffer" to array.dBuffer.toList(),
+                                    "percentageBuffer" to array.percentageBuffer.toList(),
+                                    "length" to array.length
+                                ),
+                                "rawDepthImgArrays" to mapOf(
+                                    "xBuffer" to rawArray.xBuffer.map { it.toInt() },
+                                    "yBuffer" to rawArray.yBuffer.map { it.toInt() },
+                                    "dBuffer" to rawArray.dBuffer.toList(),
+                                    "percentageBuffer" to rawArray.percentageBuffer.toList(),
+                                    "length" to rawArray.length
+                                ),
+                                "confidenceImgArrays" to mapOf(
+                                    "xBuffer" to confidenceArray.xBuffer.map { it.toInt() },
+                                    "yBuffer" to confidenceArray.yBuffer.map { it.toInt() },
+                                    "dBuffer" to confidenceArray.dBuffer.toList(),
+                                    "percentageBuffer" to confidenceArray.percentageBuffer.toList(),
+                                    "length" to confidenceArray.length
+                                )
+                            )
+                            return imageMap
+                        }
+                    }
+                }
+            }
+        } catch (e: NotYetAvailableException) {
+            Log.e(TAG, "Depth image is not yet available. This normally means that depth data is not available for this frame.")
+            sessionManagerChannel.invokeMethod("onError", listOf("Depth image is not yet available. This normally means that depth data is not available for this frame."))
+        }
+        return null
     }
-
-
 
     private inner class cloudAnchorUploadedListener: CloudAnchorHandler.CloudAnchorListener {
         override fun onCloudTaskComplete(anchorName: String?, anchor: Anchor?) {
