@@ -905,61 +905,59 @@ internal class AndroidARView(
     private fun getDepthImage(): HashMap<String, Any>? {
         val arFrame = arSceneView.getArFrame() ?: return null
 
-        val depth: Image = arFrame.acquireDepthImage16Bits()
-
-        val array = DepthImgUtil().parseImg(depth)
-
-        val depthData = depth.planes[0].buffer
-
-        val depthBytes = ByteArray(depthData.remaining())
-        depthData.get(depthBytes)
-
         try {
-            arFrame.acquireRawDepthImage16Bits().use { rawDepth ->
-                arFrame.acquireRawDepthConfidenceImage().use { rawDepthConfidence ->
-                    val thisFrameHasNewDepthData = arFrame.timestamp == rawDepth.timestamp
-                    if (thisFrameHasNewDepthData) {
-                        val rawDepthData = rawDepth.planes[0].buffer
-                        val confidenceData = rawDepthConfidence.planes[0].buffer
+            arFrame.acquireDepthImage16Bits().use { depth ->
+                arFrame.acquireRawDepthImage16Bits().use { rawDepth ->
+                    arFrame.acquireRawDepthConfidenceImage().use { rawDepthConfidence ->
+                        val thisFrameHasNewDepthData = arFrame.timestamp == rawDepth.timestamp
+                        if (thisFrameHasNewDepthData) {
+                            val depthData = depth.planes[0].buffer
+                            val rawDepthData = rawDepth.planes[0].buffer
+                            val confidenceData = rawDepthConfidence.planes[0].buffer
 
-                        val rawArray = DepthImgUtil().parseImg(rawDepth)
-                        val confidenceArray = DepthImgUtil().parseImg(rawDepthConfidence)
+                            val array = DepthImgUtil().parseImg(depth)
+                            val rawArray = DepthImgUtil().parseImg(rawDepth)
+                            val confidenceArray = DepthImgUtil().parseImg(rawDepthConfidence)
 
-                        val rawDepthBytes = ByteArray(rawDepthData.remaining())
-                        rawDepthData.get(rawDepthBytes)
+                            val depthBytes = ByteArray(depthData.remaining())
+                            depthData.get(depthBytes)
 
-                        val confidenceBytes = ByteArray(confidenceData.remaining())
-                        confidenceData.get(confidenceBytes)
+                            val rawDepthBytes = ByteArray(rawDepthData.remaining())
+                            rawDepthData.get(rawDepthBytes)
 
-                        val imageMap = hashMapOf<String, Any>(
-                            "depthImgBytes" to depthBytes,
-                            "rawDepthImgBytes" to rawDepthBytes,
-                            "confidenceImgBytes" to confidenceBytes,
-                            "width" to depth.width,
-                            "height" to depth.height,
-                            "depthImgArrays" to mapOf(
-                                "xBuffer" to array.xBuffer.map { it.toInt() },
-                                "yBuffer" to array.yBuffer.map { it.toInt() },
-                                "dBuffer" to array.dBuffer.toList(),
-                                "percentageBuffer" to array.percentageBuffer.toList(),
-                                "length" to array.length
-                            ),
-                            "rawDepthImgArrays" to mapOf(
-                                "xBuffer" to rawArray.xBuffer.map { it.toInt() },
-                                "yBuffer" to rawArray.yBuffer.map { it.toInt() },
-                                "dBuffer" to rawArray.dBuffer.toList(),
-                                "percentageBuffer" to rawArray.percentageBuffer.toList(),
-                                "length" to rawArray.length
-                            ),
-                            "confidenceImgArrays" to mapOf(
-                                "xBuffer" to confidenceArray.xBuffer.map { it.toInt() },
-                                "yBuffer" to confidenceArray.yBuffer.map { it.toInt() },
-                                "dBuffer" to confidenceArray.dBuffer.toList(),
-                                "percentageBuffer" to confidenceArray.percentageBuffer.toList(),
-                                "length" to confidenceArray.length
+                            val confidenceBytes = ByteArray(confidenceData.remaining())
+                            confidenceData.get(confidenceBytes)
+
+                            val imageMap = hashMapOf<String, Any>(
+                                "depthImgBytes" to depthBytes,
+                                "rawDepthImgBytes" to rawDepthBytes,
+                                "confidenceImgBytes" to confidenceBytes,
+                                "width" to depth.width,
+                                "height" to depth.height,
+                                "depthImgArrays" to mapOf(
+                                    "xBuffer" to array.xBuffer.map { it.toInt() },
+                                    "yBuffer" to array.yBuffer.map { it.toInt() },
+                                    "dBuffer" to array.dBuffer.toList(),
+                                    "percentageBuffer" to array.percentageBuffer.toList(),
+                                    "length" to array.length
+                                ),
+                                "rawDepthImgArrays" to mapOf(
+                                    "xBuffer" to rawArray.xBuffer.map { it.toInt() },
+                                    "yBuffer" to rawArray.yBuffer.map { it.toInt() },
+                                    "dBuffer" to rawArray.dBuffer.toList(),
+                                    "percentageBuffer" to rawArray.percentageBuffer.toList(),
+                                    "length" to rawArray.length
+                                ),
+                                "confidenceImgArrays" to mapOf(
+                                    "xBuffer" to confidenceArray.xBuffer.map { it.toInt() },
+                                    "yBuffer" to confidenceArray.yBuffer.map { it.toInt() },
+                                    "dBuffer" to confidenceArray.dBuffer.toList(),
+                                    "percentageBuffer" to confidenceArray.percentageBuffer.toList(),
+                                    "length" to confidenceArray.length
+                                )
                             )
-                        )
-                        return imageMap
+                            return imageMap
+                        }
                     }
                 }
             }
