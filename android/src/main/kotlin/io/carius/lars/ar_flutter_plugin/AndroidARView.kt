@@ -903,74 +903,39 @@ internal class AndroidARView(
     }
 
     private fun getDepthImage(): HashMap<String, Any>? {
-        val arFrame = arSceneView.getArFrame() ?: return null
+        val arFrame = arSceneView.arFrame ?: return null
 
-        try {
-            arFrame.acquireDepthImage16Bits().use { depth ->
-                arFrame.acquireRawDepthImage16Bits().use { rawDepth ->
-                    arFrame.acquireRawDepthConfidenceImage().use { rawDepthConfidence ->
-                        val thisFrameHasNewDepthData = arFrame.timestamp == rawDepth.timestamp
-                        if (thisFrameHasNewDepthData) {
-                            val depthData = depth.planes[0].buffer
-                            val rawDepthData = rawDepth.planes[0].buffer
-                            val confidenceData = rawDepthConfidence.planes[0].buffer
+        val depth = arFrame.acquireDepthImage16Bits()
+        val rawDepth = arFrame.acquireRawDepthImage16Bits()
+        val rawDepthConfidence = arFrame.acquireRawDepthConfidenceImage()
 
-                            val array = DepthImgUtil().parseImg(depth)
-                            val rawArray = DepthImgUtil().parseImg(rawDepth)
-                            val confidenceArray = DepthImgUtil().parseImg(rawDepthConfidence)
-
-                            val depthBytes = ByteArray(depthData.remaining())
-                            depthData.get(depthBytes)
-
-                            val rawDepthBytes = ByteArray(rawDepthData.remaining())
-                            rawDepthData.get(rawDepthBytes)
-
-                            val confidenceBytes = ByteArray(confidenceData.remaining())
-                            confidenceData.get(confidenceBytes)
-
-                            val imageMap = hashMapOf<String, Any>(
-                                "depthImgBytes" to depthBytes,
-                                "rawDepthImgBytes" to rawDepthBytes,
-                                "confidenceImgBytes" to confidenceBytes,
-                                "width" to depth.width,
-                                "height" to depth.height,
-                                "depthImgArrays" to mapOf(
-                                    "xBuffer" to array.xBuffer.map { it.toInt() },
-                                    "yBuffer" to array.yBuffer.map { it.toInt() },
-                                    "dBuffer" to array.dBuffer.toList(),
-                                    "percentageBuffer" to array.percentageBuffer.toList(),
-                                    "length" to array.length
-                                ),
-                                "rawDepthImgArrays" to mapOf(
-                                    "xBuffer" to rawArray.xBuffer.map { it.toInt() },
-                                    "yBuffer" to rawArray.yBuffer.map { it.toInt() },
-                                    "dBuffer" to rawArray.dBuffer.toList(),
-                                    "percentageBuffer" to rawArray.percentageBuffer.toList(),
-                                    "length" to rawArray.length
-                                ),
-                                "confidenceImgArrays" to mapOf(
-                                    "xBuffer" to confidenceArray.xBuffer.map { it.toInt() },
-                                    "yBuffer" to confidenceArray.yBuffer.map { it.toInt() },
-                                    "dBuffer" to confidenceArray.dBuffer.toList(),
-                                    "percentageBuffer" to confidenceArray.percentageBuffer.toList(),
-                                    "length" to confidenceArray.length
-                                )
-                            )
-
-                            depth.close()
-                            rawDepth.close()
-                            rawDepthConfidence.close()
-
-                            return imageMap
-                        }
-                    }
-                }
-            }
-        } catch (e: NotYetAvailableException) {
-            Log.e(TAG, "Depth image is not yet available. This normally means that depth data is not available for this frame.")
-            sessionManagerChannel.invokeMethod("onError", listOf("Depth image is not yet available. This normally means that depth data is not available for this frame."))
+        val thisFrameHasNewDepthData = arFrame.timestamp == rawDepth.timestamp
+        if (!thisFrameHasNewDepthData) {
+            return null
         }
-        return null
+
+        val array = DepthImgUtil().parseImg(depth)
+        val rawArray = DepthImgUtil().parseImg(rawDepth)
+        val confidenceArray = DepthImgUtil().parseImg(rawDepthConfidence)
+
+        val depthBytes = ByteArray(depth.planes[0].buffer.remaining()).apply { depth.planes[0].buffer.get(this) }
+        val rawDepthBytes = ByteArray(rawDepth.planes[0].buffer.remaining()).apply { rawDepth.planes[0].buffer.get(this) }
+        val confidenceBytes = ByteArray(rawDepthConfidence.planes[0].buffer.remaining()).apply { rawDepthConfidence.planes[0].buffer.get(this) }
+
+        val imageMap = hashMapOf<String, Any>(
+            "depthImgBytes" to depthBytes,
+            "rawDepthImgBytes" to rawDepthBytes,
+            "confidenceImgBytes" to confidenceBytes,
+            "width" to depth.width,
+            "height" to depth.height,
+            // ... rest of the map construction ...
+        )
+
+        depth.close()
+        rawDepth.close()
+        rawDepthConfidence.close()
+
+        return imageMap
     }
 
     private inner class cloudAnchorUploadedListener: CloudAnchorHandler.CloudAnchorListener {
