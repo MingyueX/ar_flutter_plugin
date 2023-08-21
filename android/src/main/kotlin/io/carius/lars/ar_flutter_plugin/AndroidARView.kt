@@ -965,6 +965,7 @@ internal class AndroidARView(
             Log.e(TAG, "Depth image is not yet available. This normally means that depth data is not available for this frame.")
             sessionManagerChannel.invokeMethod("onError", listOf("Depth image is not yet available. This normally means that depth data is not available for this frame."))
         }
+        return null
     }
 
     private inner class cloudAnchorUploadedListener: CloudAnchorHandler.CloudAnchorListener {
