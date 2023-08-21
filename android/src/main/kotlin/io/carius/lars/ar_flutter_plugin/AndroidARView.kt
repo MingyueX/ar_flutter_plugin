@@ -956,6 +956,11 @@ internal class AndroidARView(
                                     "length" to confidenceArray.length
                                 )
                             )
+
+                            depth.close()
+                            rawDepth.close()
+                            rawDepthConfidence.close()
+
                             return imageMap
                         }
                     }
