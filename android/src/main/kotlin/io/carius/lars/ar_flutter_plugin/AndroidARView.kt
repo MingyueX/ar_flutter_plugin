@@ -909,11 +909,6 @@ internal class AndroidARView(
         val rawDepth = arFrame.acquireRawDepthImage16Bits()
         val rawDepthConfidence = arFrame.acquireRawDepthConfidenceImage()
 
-        val thisFrameHasNewDepthData = arFrame.timestamp == rawDepth.timestamp
-        if (!thisFrameHasNewDepthData) {
-            return null
-        }
-
         val array = DepthImgUtil().parseImg(depth)
         val rawArray = DepthImgUtil().parseImg(rawDepth)
         val confidenceArray = DepthImgUtil().parseImg(rawDepthConfidence)
@@ -928,7 +923,27 @@ internal class AndroidARView(
             "confidenceImgBytes" to confidenceBytes,
             "width" to depth.width,
             "height" to depth.height,
-            // ... rest of the map construction ...
+            "depthImgArrays" to mapOf(
+                "xBuffer" to array.xBuffer.map { it.toInt() },
+                "yBuffer" to array.yBuffer.map { it.toInt() },
+                "dBuffer" to array.dBuffer.toList(),
+                "percentageBuffer" to array.percentageBuffer.toList(),
+                "length" to array.length
+            ),
+            "rawDepthImgArrays" to mapOf(
+                "xBuffer" to rawArray.xBuffer.map { it.toInt() },
+                "yBuffer" to rawArray.yBuffer.map { it.toInt() },
+                "dBuffer" to rawArray.dBuffer.toList(),
+                "percentageBuffer" to rawArray.percentageBuffer.toList(),
+                "length" to rawArray.length
+            ),
+            "confidenceImgArrays" to mapOf(
+                "xBuffer" to confidenceArray.xBuffer.map { it.toInt() },
+                "yBuffer" to confidenceArray.yBuffer.map { it.toInt() },
+                "dBuffer" to confidenceArray.dBuffer.toList(),
+                "percentageBuffer" to confidenceArray.percentageBuffer.toList(),
+                "length" to confidenceArray.length
+            )
         )
 
         depth.close()
