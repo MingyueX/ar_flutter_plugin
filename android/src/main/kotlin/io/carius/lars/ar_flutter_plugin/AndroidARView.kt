@@ -913,9 +913,13 @@ internal class AndroidARView(
         val rawArray = DepthImgUtil().parseImg(rawDepth)
         val confidenceArray = DepthImgUtil().parseImg(rawDepthConfidence)
 
-        val depthBytes = ByteArray(depth.planes[0].buffer.remaining()).apply { depth.planes[0].buffer.get(this) }
+        val depthBytes = ImageUtil().imageToByteArray(depth) ?: byteArrayOf()
+        val rawDepthBytes = ImageUtil().imageToByteArray(rawDepth) ?: byteArrayOf()
+        val confidenceBytes = ImageUtil().imageToByteArray(rawDepthConfidence) ?: byteArrayOf()
+
+        /*val depthBytes = ByteArray(depth.planes[0].buffer.remaining()).apply { depth.planes[0].buffer.get(this) }
         val rawDepthBytes = ByteArray(rawDepth.planes[0].buffer.remaining()).apply { rawDepth.planes[0].buffer.get(this) }
-        val confidenceBytes = ByteArray(rawDepthConfidence.planes[0].buffer.remaining()).apply { rawDepthConfidence.planes[0].buffer.get(this) }
+        val confidenceBytes = ByteArray(rawDepthConfidence.planes[0].buffer.remaining()).apply { rawDepthConfidence.planes[0].buffer.get(this) }*/
 
         val imageMap = hashMapOf<String, Any>(
             "depthImgBytes" to depthBytes,
