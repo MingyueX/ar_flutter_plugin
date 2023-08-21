@@ -18,9 +18,9 @@ class ARImage {
         assert(width != null && width > 0),
         assert(height != null && height > 0);
 
-  final Uint16List? depthImgBytes;
-  final Uint16List? rawDepthImgBytes;
-  final Uint16List? confidenceImgBytes;
+  final Uint8List? depthImgBytes;
+  final Uint8List? rawDepthImgBytes;
+  final Uint8List? confidenceImgBytes;
   final int? width;
   final int? height;
   final DepthImgArrays? depthImgArrays;
