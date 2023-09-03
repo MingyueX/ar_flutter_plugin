@@ -912,6 +912,36 @@ internal class AndroidARView(
         return imageMap
     }
 
+    private fun getFullDepthOnly(): HashMap<String, Any>? {
+        val arFrame = arSceneView.arFrame ?: return null
+
+        val depthImage: Image = arFrame.acquireDepthImage()
+
+        val array = DepthImgUtil().parseImg(depthImage)
+
+        val buffer = depthImage.planes[0].buffer
+        val stride = depthImage.planes[0].rowStride
+        val bytes = ByteArray(buffer.remaining())
+        buffer.get(bytes)
+
+        val imageMap = hashMapOf<String, Any>(
+            "bytes" to bytes,
+            "width" to depthImage.width,
+            "height" to depthImage.height,
+            "depthImgArrays" to mapOf(
+                "xBuffer" to array.xBuffer.map { it.toInt() },
+                "yBuffer" to array.yBuffer.map { it.toInt() },
+                "dBuffer" to array.dBuffer.toList(),
+                "percentageBuffer" to array.percentageBuffer.toList(),
+                "length" to array.length
+            ),
+        )
+
+        depthImage.close()
+
+        return imageMap
+    }
+
     private fun getDepthImage(): HashMap<String, Any>? {
         val arFrame = arSceneView.arFrame ?: return null
 
@@ -965,7 +995,7 @@ internal class AndroidARView(
 
     private val fetchImageRunnable = object : Runnable {
         override fun run() {
-            val depthImageMap = getDepthImage()
+            val depthImageMap = getFullDepthOnly()
             val cameraImageMap = getCameraImage()
             if (depthImageMap != null && cameraImageMap != null) {
                 val combinedMap = hashMapOf<String, Any>(
