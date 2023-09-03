@@ -915,31 +915,40 @@ internal class AndroidARView(
     private fun getFullDepthOnly(): HashMap<String, Any>? {
         val arFrame = arSceneView.arFrame ?: return null
 
-        val depthImage: Image = arFrame.acquireDepthImage()
+        try {
+            val depthImage: Image = arFrame.acquireDepthImage16Bits()
 
-        val array = DepthImgUtil().parseImg(depthImage)
+            val array = DepthImgUtil().parseImg(depthImage)
 
-        val buffer = depthImage.planes[0].buffer
-        val stride = depthImage.planes[0].rowStride
-        val bytes = ByteArray(buffer.remaining())
-        buffer.get(bytes)
+            val buffer = depthImage.planes[0].buffer
+            val stride = depthImage.planes[0].rowStride
+            val bytes = ByteArray(buffer.remaining())
+            buffer.get(bytes)
 
-        val imageMap = hashMapOf<String, Any>(
-            "bytes" to bytes,
-            "width" to depthImage.width,
-            "height" to depthImage.height,
-            "depthImgArrays" to mapOf(
-                "xBuffer" to array.xBuffer.map { it.toInt() },
-                "yBuffer" to array.yBuffer.map { it.toInt() },
-                "dBuffer" to array.dBuffer.toList(),
-                "percentageBuffer" to array.percentageBuffer.toList(),
-                "length" to array.length
-            ),
-        )
+            val imageMap = hashMapOf<String, Any>(
+                "depthImgBytes" to bytes,
+                "width" to depthImage.width,
+                "height" to depthImage.height,
+                "depthImgArrays" to mapOf(
+                    "xBuffer" to array.xBuffer.map { it.toInt() },
+                    "yBuffer" to array.yBuffer.map { it.toInt() },
+                    "dBuffer" to array.dBuffer.toList(),
+                    "percentageBuffer" to array.percentageBuffer.toList(),
+                    "length" to array.length
+                ),
+            )
 
-        depthImage.close()
+            depthImage.close()
 
-        return imageMap
+            return imageMap
+        } catch (e: NotYetAvailableException) {
+            // This means that depth data is not available yet.
+            // Depth data will not be available if there are no tracked
+            // feature points. This can happen when there is no motion, or when the
+            // camera loses its ability to track objects in the surrounding
+            // environment.
+        }
+        return null
     }
 
     private fun getDepthImage(): HashMap<String, Any>? {
