@@ -39,7 +39,6 @@ class ARSessionManager {
       {this.debug = false}) {
     _channel = MethodChannel('arsession_$id');
     _channel.setMethodCallHandler(_platformCallHandler);
-    _channel.setMethodCallHandler(_handleMethodCall);
     if (debug) {
       print("ARSessionManager initialized");
     }
@@ -137,16 +136,6 @@ class ARSessionManager {
   /// Returns the depth image stream for listening
   Stream<Map<String, dynamic>> get depthImageStream => _imageStreamController.stream;
 
-  Future<void> _handleMethodCall(MethodCall call) async {
-    switch (call.method) {
-      case 'imageData':
-        _imageStreamController.add(call.arguments);
-        break;
-      default:
-        break;
-    }
-  }
-
   Future<void> _platformCallHandler(MethodCall call) {
     if (debug) {
       print('_platformCallHandler call ${call.method} ${call.arguments}');
@@ -174,6 +163,9 @@ class ARSessionManager {
           break;
         case 'dispose':
           _channel.invokeMethod<void>("dispose");
+          break;
+        case 'imageData':
+          _imageStreamController.add(call.arguments);
           break;
         default:
           if (debug) {
