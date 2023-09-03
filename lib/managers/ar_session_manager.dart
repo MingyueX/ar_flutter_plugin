@@ -165,7 +165,8 @@ class ARSessionManager {
           _channel.invokeMethod<void>("dispose");
           break;
         case 'imageData':
-          _imageStreamController.add(call.arguments);
+          Map<String, dynamic> castedImageMap = (call.arguments as Map).cast<String, dynamic>();
+          _imageStreamController.add(castedImageMap);
           break;
         default:
           if (debug) {
