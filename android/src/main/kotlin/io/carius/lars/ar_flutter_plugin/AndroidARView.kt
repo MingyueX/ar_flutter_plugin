@@ -91,6 +91,7 @@ internal class AndroidARView(
     private var modelBuilder = ArModelBuilder()
     // Cloud anchor handler
     private lateinit var cloudAnchorHandler: CloudAnchorHandler
+    private val imageStreamHandler = Handler(Looper.getMainLooper())
 
     private lateinit var sceneUpdateListener: com.google.ar.sceneform.Scene.OnUpdateListener
     private lateinit var onNodeTapListener: com.google.ar.sceneform.Scene.OnPeekTouchListener
@@ -970,18 +971,18 @@ internal class AndroidARView(
                     "depthImage" to depthImageMap,
                     "cameraImage" to cameraImageMap
                 )
-                methodChannel.invokeMethod("imageData", combinedMap)
+                sessionManagerChannel.invokeMethod("imageData", combinedMap)
             }
-            handler.postDelayed(this, 1000 / 30) // for ~30fps
+            imageStreamHandler.postDelayed(this, 1000 / 30) // for ~30fps
         }
     }
 
     fun startFetchingImages() {
-        handler.post(fetchImageRunnable)
+        imageStreamHandler.post(fetchImageRunnable)
     }
 
     fun stopFetchingImages() {
-        handler.removeCallbacks(fetchImageRunnable)
+        imageStreamHandler.removeCallbacks(fetchImageRunnable)
     }
 
     private inner class cloudAnchorUploadedListener: CloudAnchorHandler.CloudAnchorListener {
