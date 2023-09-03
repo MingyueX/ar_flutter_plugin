@@ -36,9 +36,13 @@ class ARImage {
       height: map['height'],
       depthImgArrays: DepthImgArrays.fromMap(Map.from(map['depthImgArrays'])),
       rawDepthImgArrays:
-          DepthImgArrays.fromMap(Map.from(map['rawDepthImgArrays'])),
+          map['rawDepthImgArrays'] == null
+              ? null
+              : DepthImgArrays.fromMap(Map.from(map['rawDepthImgArrays'])),
       confidenceImgArrays:
-          DepthImgArrays.fromMap(Map.from(map['confidenceImgArrays'])),
+          map['confidenceImgArrays'] == null
+              ? null
+              : DepthImgArrays.fromMap(Map.from(map['confidenceImgArrays'])),
     );
   }
 }
