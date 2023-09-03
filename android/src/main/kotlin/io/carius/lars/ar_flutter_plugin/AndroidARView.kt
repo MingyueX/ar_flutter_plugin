@@ -161,6 +161,14 @@ internal class AndroidARView(
                             val imageMap = getDepthImage()
                             result.success(imageMap)
                         }
+                        "startFetchingImages" -> {
+                            startFetchingImages()
+                            result.success(null)
+                        }
+                        "stopFetchingImages" -> {
+                            stopFetchingImages()
+                            result.success(null)
+                        }
                         else -> {}
                     }
                 }
@@ -951,6 +959,29 @@ internal class AndroidARView(
         rawDepthConfidence.close()
 
         return imageMap
+    }
+
+    private val fetchImageRunnable = object : Runnable {
+        override fun run() {
+            val depthImageMap = getDepthImage()
+            val cameraImageMap = getCameraImage()
+            if (depthImageMap != null && cameraImageMap != null) {
+                val combinedMap = hashMapOf<String, Any>(
+                    "depthImage" to depthImageMap,
+                    "cameraImage" to cameraImageMap
+                )
+                methodChannel.invokeMethod("imageData", combinedMap)
+            }
+            handler.postDelayed(this, 1000 / 30) // for ~30fps
+        }
+    }
+
+    fun startFetchingImages() {
+        handler.post(fetchImageRunnable)
+    }
+
+    fun stopFetchingImages() {
+        handler.removeCallbacks(fetchImageRunnable)
     }
 
     private inner class cloudAnchorUploadedListener: CloudAnchorHandler.CloudAnchorListener {

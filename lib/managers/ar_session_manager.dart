@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'dart:math' show sqrt;
-import 'dart:typed_data';
 
 import 'package:ar_flutter_plugin/datatypes/config_planedetection.dart';
 import 'package:ar_flutter_plugin/models/ar_anchor.dart';
@@ -32,10 +32,14 @@ class ARSessionManager {
   /// Receives hit results from user taps with tracked planes or feature points
   late ARHitResultHandler onPlaneOrPointTap;
 
+  /// Stream of depth images
+  static final StreamController<Map<String, dynamic>> _imageStreamController = StreamController.broadcast();
+
   ARSessionManager(int id, this.buildContext, this.planeDetectionConfig,
       {this.debug = false}) {
     _channel = MethodChannel('arsession_$id');
     _channel.setMethodCallHandler(_platformCallHandler);
+    _channel.setMethodCallHandler(_handleMethodCall);
     if (debug) {
       print("ARSessionManager initialized");
     }
@@ -120,6 +124,29 @@ class ARSessionManager {
       return ARImage.fromMap(result);
   }
 
+  /// Starts depth images stream
+  void startFetchingImages() {
+    _channel.invokeMethod('startFetchingImages');
+  }
+
+  /// Stops depth images stream
+  void stopFetchingImages() {
+    _channel.invokeMethod('stopFetchingImages');
+  }
+
+  /// Returns the depth image stream for listening
+  Stream<Map<String, dynamic>> get depthImageStream => _imageStreamController.stream;
+
+  Future<void> _handleMethodCall(MethodCall call) async {
+    switch (call.method) {
+      case 'imageData':
+        _imageStreamController.add(call.arguments);
+        break;
+      default:
+        break;
+    }
+  }
+
   Future<void> _platformCallHandler(MethodCall call) {
     if (debug) {
       print('_platformCallHandler call ${call.method} ${call.arguments}');
@@ -200,6 +227,7 @@ class ARSessionManager {
   dispose() async {
     try {
       await _channel.invokeMethod<void>("dispose");
+      _imageStreamController.close();
     } catch (e) {
       print(e);
     }
