@@ -13,8 +13,6 @@ class ARImage {
     this.rawDepthImgArrays,
     this.confidenceImgArrays,
   })  : assert(depthImgBytes != null),
-        assert(rawDepthImgBytes != null),
-        assert(confidenceImgBytes != null),
         assert(width != null && width > 0),
         assert(height != null && height > 0);
 
