@@ -4,6 +4,7 @@ import 'dart:math' show sqrt;
 import 'package:ar_flutter_plugin/datatypes/config_planedetection.dart';
 import 'package:ar_flutter_plugin/models/ar_anchor.dart';
 import 'package:ar_flutter_plugin/models/ar_hittest_result.dart';
+import 'package:ar_flutter_plugin/models/camera_intrinsics.dart';
 import 'package:ar_flutter_plugin/utils/json_converters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -107,6 +108,13 @@ class ARSessionManager {
     num dz = vector1.z - vector2.z;
     double distance = sqrt(dx * dx + dy * dy + dz * dz);
     return distance;
+  }
+
+  /// Returns the camera intrinsics
+  Future<CameraIntrinsics> getCameraIntrinsics() async {
+    final Map<dynamic, dynamic> result =
+        await _channel.invokeMethod('getCameraIntrinsics');
+    return CameraIntrinsics.fromMap(result);
   }
 
   /// Returns the camera image

@@ -171,6 +171,10 @@ internal class AndroidARView(
                             stopFetchingImages()
                             result.success(null)
                         }
+                        "getCameraIntrinsics" -> {
+                            val intrinsics = getCameraIntrinsics()
+                            result.success(intrinsics)
+                        }
                         else -> {}
                     }
                 }
@@ -894,6 +898,33 @@ internal class AndroidARView(
             anchorNode.setParent(null)
         }
     }
+
+    private fun getCameraIntrinsics(): HashMap<String, Any>? {
+        val arFrame = arSceneView.arFrame ?: return null
+        val cameraIntrinsics = arFrame.camera.cameraIntrinsics
+
+        // Fetching the focal length ([fx, fy])
+        val focalLength = cameraIntrinsics.focalLength
+
+        // Fetching the image dimensions
+        val imageDimensions = cameraIntrinsics.imageDimensions
+
+        // Fetching the principal point ([cx, cy])
+        val principalPoint = cameraIntrinsics.principalPoint
+
+        // Constructing the map to return
+        val intrinsicsMap = hashMapOf<String, Any>(
+            "focalLengthX" to focalLength[0],
+            "focalLengthY" to focalLength[1],
+            "imageWidth" to imageDimensions.x,
+            "imageHeight" to imageDimensions.y,
+            "principalPointX" to principalPoint[0],
+            "principalPointY" to principalPoint[1]
+        )
+
+        return intrinsicsMap
+    }
+
 
     private fun getCameraImage(): HashMap<String, Any>? {
         val arFrame = arSceneView.arFrame ?: return null
