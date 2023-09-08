@@ -916,8 +916,8 @@ internal class AndroidARView(
         val intrinsicsMap = hashMapOf<String, Any>(
             "focalLengthX" to focalLength[0],
             "focalLengthY" to focalLength[1],
-            "imageWidth" to imageDimensions.x,
-            "imageHeight" to imageDimensions.y,
+            "imageWidth" to imageDimensions[0],
+            "imageHeight" to imageDimensions[1],
             "principalPointX" to principalPoint[0],
             "principalPointY" to principalPoint[1]
         )
