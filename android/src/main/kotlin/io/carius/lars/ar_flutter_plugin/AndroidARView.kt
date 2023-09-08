@@ -901,7 +901,7 @@ internal class AndroidARView(
 
     private fun getCameraIntrinsics(): HashMap<String, Any>? {
         val arFrame = arSceneView.arFrame ?: return null
-        val cameraIntrinsics = arFrame.camera.cameraIntrinsics
+        val cameraIntrinsics = arFrame.camera.getImageIntrinsics()
 
         // Fetching the focal length ([fx, fy])
         val focalLength = cameraIntrinsics.focalLength
