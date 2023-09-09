@@ -34,6 +34,8 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.FloatBuffer
 import java.util.concurrent.CompletableFuture
+import com.chaquo.python.Python
+import com.chaquo.python.PyObject
 
 import android.R
 import com.google.ar.sceneform.rendering.*
@@ -1035,14 +1037,23 @@ internal class AndroidARView(
 
     private val fetchImageRunnable = object : Runnable {
         override fun run() {
-            val depthImageMap = getFullDepthOnly()
-            val cameraImageMap = getCameraImage()
+            val arFrame = arSceneView.arFrame
+            if (arFrame == null || arFrame.camera.trackingState != TrackingState.TRACKING) {
+                imageStreamHandler.postDelayed(this, 1000 / 30) // for ~30fps
+                return
+            }
+            val cameraImage: Image = arFrame.acquireCameraImage()
+            val bytes = ImageUtil().imageToByteArray(cameraImage) ?: byteArrayOf()
+
+            val depthImage: Image = arFrame.acquireDepthImage16Bits()
+            val array = DepthImgUtil().parseImg(depthImage)
+
             if (depthImageMap != null && cameraImageMap != null) {
-                val combinedMap = hashMapOf<String, Any>(
-                    "depthImage" to depthImageMap,
-                    "cameraImage" to cameraImageMap
-                )
-                sessionManagerChannel.invokeMethod("imageData", combinedMap)
+                val python = Python.getInstance()
+                val pythonModule = python.getModule("improc_depth_evaluator")
+                val pyResult: PyObject = pythonModule.callAttr("run", array.dBuffer.toList() , bytes, cameraImage.width, cameraImage.height, depthImage.width, depthImage.height)
+                val result: Double = pyResult.toDouble()
+                sessionManagerChannel.invokeMethod("imageData", result)
             }
             imageStreamHandler.postDelayed(this, 1000 / 30) // for ~30fps
         }

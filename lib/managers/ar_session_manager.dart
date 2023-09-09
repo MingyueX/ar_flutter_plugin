@@ -34,7 +34,7 @@ class ARSessionManager {
   late ARHitResultHandler onPlaneOrPointTap;
 
   /// Stream of depth images
-  static final StreamController<Map<String, dynamic>> _imageStreamController = StreamController.broadcast();
+  static final StreamController<double> _imageStreamController = StreamController<double>.broadcast();
 
   ARSessionManager(int id, this.buildContext, this.planeDetectionConfig,
       {this.debug = false}) {
@@ -142,7 +142,7 @@ class ARSessionManager {
   }
 
   /// Returns the depth image stream for listening
-  Stream<Map<String, dynamic>> get depthImageStream => _imageStreamController.stream;
+  Stream<double> get depthQualityStream => _imageStreamController.stream;
 
   Future<void> _platformCallHandler(MethodCall call) {
     if (debug) {
@@ -173,8 +173,8 @@ class ARSessionManager {
           _channel.invokeMethod<void>("dispose");
           break;
         case 'imageData':
-          Map<String, dynamic> castedImageMap = (call.arguments as Map).cast<String, dynamic>();
-          _imageStreamController.add(castedImageMap);
+          double imageQuality = call.arguments as double;
+          _imageStreamController.add(imageQuality);
           break;
         default:
           if (debug) {
