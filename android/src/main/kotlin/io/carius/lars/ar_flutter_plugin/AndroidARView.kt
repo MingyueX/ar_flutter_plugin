@@ -33,6 +33,7 @@ import io.flutter.plugin.platform.PlatformView
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.FloatBuffer
+import java.nio.ByteBuffer
 import java.util.concurrent.CompletableFuture
 import com.chaquo.python.Python
 import com.chaquo.python.PyObject
