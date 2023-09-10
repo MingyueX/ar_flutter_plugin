@@ -1048,7 +1048,7 @@ internal class AndroidARView(
             val depthImage: Image = arFrame.acquireDepthImage16Bits()
             val array = DepthImgUtil().parseImg(depthImage)
 
-            if (depthImageMap != null && cameraImageMap != null) {
+            if (depthImage != null && cameraImage != null) {
                 val python = Python.getInstance()
                 val pythonModule = python.getModule("improc_depth_evaluator")
                 val pyResult: PyObject = pythonModule.callAttr("run", array.dBuffer.toList() , bytes, cameraImage.width, cameraImage.height, depthImage.width, depthImage.height)
