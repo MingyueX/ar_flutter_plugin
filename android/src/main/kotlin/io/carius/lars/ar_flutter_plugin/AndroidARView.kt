@@ -1039,26 +1039,35 @@ internal class AndroidARView(
         override fun run() {
             val arFrame = arSceneView.arFrame
             if (arFrame == null || arFrame.camera.trackingState != TrackingState.TRACKING) {
-                imageStreamHandler.postDelayed(this, 1000 / 30) // for ~30fps
+                imageStreamHandler.postDelayed(this, 1000 / 15) // for ~30fps
                 return
             }
             val cameraImage: Image = arFrame.acquireCameraImage()
             val bytes = ImageUtil().imageToByteArray(cameraImage) ?: byteArrayOf()
 
-            val depthImage: Image = arFrame.acquireDepthImage16Bits()
-            val array = DepthImgUtil().parseImg(depthImage)
+            try {
+                val depthImage: Image = arFrame.acquireDepthImage16Bits()
+                val array = DepthImgUtil().parseImg(depthImage)
 
-            if (depthImage != null && cameraImage != null) {
-                val python = Python.getInstance()
-                val pythonModule = python.getModule("improc_depth_evaluator")
-                val pyResult: PyObject = pythonModule.callAttr("run", array.dBuffer.toList(), bytes, cameraImage.width, cameraImage.height, depthImage.width, depthImage.height)
-                val result: Double = pyResult.toDouble()
-                sessionManagerChannel.invokeMethod("imageData", result)
+                if (depthImage != null && cameraImage != null) {
+                    val python = Python.getInstance()
+                    val pythonModule = python.getModule("improc_depth_evaluator")
+                    val pyResult: PyObject = pythonModule.callAttr("run", array.dBuffer.toList(), bytes, cameraImage.width, cameraImage.height, depthImage.width, depthImage.height)
+                    val result: Double = pyResult.toDouble()
+                    sessionManagerChannel.invokeMethod("imageData", result)
+                }
+                depthImage.close()
+            } catch (e: NotYetAvailableException) {
+                // This means that depth data is not available yet.
+                // Depth data will not be available if there are no tracked
+                // feature points. This can happen when there is no motion, or when the
+                // camera loses its ability to track objects in the surrounding
+                // environment.
+                Log.e("ARCore", "Depth data not available yet.")
             }
-            imageStreamHandler.postDelayed(this, 1000 / 30) // for ~30fps
 
             cameraImage.close()
-            depthImage.close()
+            imageStreamHandler.postDelayed(this, 1000 / 15) // for ~30fps
         }
     }
 
