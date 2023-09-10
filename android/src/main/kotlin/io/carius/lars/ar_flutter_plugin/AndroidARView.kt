@@ -36,6 +36,7 @@ import java.nio.FloatBuffer
 import java.util.concurrent.CompletableFuture
 import com.chaquo.python.Python
 import com.chaquo.python.PyObject
+import kotlinx.coroutines.*
 
 import android.R
 import com.google.ar.sceneform.rendering.*
@@ -95,6 +96,13 @@ internal class AndroidARView(
     // Cloud anchor handler
     private lateinit var cloudAnchorHandler: CloudAnchorHandler
     private val imageStreamHandler = Handler(Looper.getMainLooper())
+
+    private val imageUtil = ImageUtil()
+    private val depthImgUtil = DepthImgUtil()
+    private val python = Python.getInstance()
+    private val pythonModule = python.getModule("improc_depth_evaluator")
+
+    private val imageFetchingScope = CoroutineScope(Dispatchers.IO)
 
     private lateinit var sceneUpdateListener: com.google.ar.sceneform.Scene.OnUpdateListener
     private lateinit var onNodeTapListener: com.google.ar.sceneform.Scene.OnPeekTouchListener
@@ -1035,48 +1043,49 @@ internal class AndroidARView(
         return imageMap
     }
 
-    private val fetchImageRunnable = object : Runnable {
-        override fun run() {
+    fun startFetchingImages() {
+        imageFetchingScope.launch {
+            fetchImages()
+        }
+    }
+
+    suspend fun fetchImages() {
+        while (isActive) {
             val arFrame = arSceneView.arFrame
             if (arFrame == null || arFrame.camera.trackingState != TrackingState.TRACKING) {
-                imageStreamHandler.postDelayed(this, 1000 / 15) // for ~30fps
-                return
+                delay(1000 / 30) // for ~30fps
+                continue
             }
+
             val cameraImage: Image = arFrame.acquireCameraImage()
-            val bytes = ImageUtil().imageToByteArray(cameraImage) ?: byteArrayOf()
+            val bytes = imageUtil.yuvToJpegByteArray(cameraImage) ?: byteArrayOf()
 
             try {
                 val depthImage: Image = arFrame.acquireDepthImage16Bits()
-                val array = DepthImgUtil().parseImg(depthImage)
+                val array = depthImgUtil.parseImg(depthImage)
 
                 if (depthImage != null && cameraImage != null) {
-                    val python = Python.getInstance()
-                    val pythonModule = python.getModule("improc_depth_evaluator")
-                    val pyResult: PyObject = pythonModule.callAttr("run", array.dBuffer.toList(), bytes, cameraImage.width, cameraImage.height, depthImage.width, depthImage.height)
-                    val result: Double = pyResult.toDouble()
-                    sessionManagerChannel.invokeMethod("imageData", result)
+                    withContext(Dispatchers.Default) {
+                        val pyResult: PyObject = pythonModule.callAttr("run", array.dBuffer.toList(), bytes, cameraImage.width, cameraImage.height, depthImage.width, depthImage.height)
+                        val result: Double = pyResult.toDouble()
+                        withContext(Dispatchers.Main) {
+                            sessionManagerChannel.invokeMethod("imageData", result)
+                        }
+                    }
                 }
                 depthImage.close()
             } catch (e: NotYetAvailableException) {
                 // This means that depth data is not available yet.
-                // Depth data will not be available if there are no tracked
-                // feature points. This can happen when there is no motion, or when the
-                // camera loses its ability to track objects in the surrounding
-                // environment.
                 Log.e("ARCore", "Depth data not available yet.")
             }
 
             cameraImage.close()
-            imageStreamHandler.postDelayed(this, 1000 / 15) // for ~30fps
+            delay(1000 / 30) // for ~30fps
         }
     }
 
-    fun startFetchingImages() {
-        imageStreamHandler.post(fetchImageRunnable)
-    }
-
     fun stopFetchingImages() {
-        imageStreamHandler.removeCallbacks(fetchImageRunnable)
+        imageFetchingScope.cancel()
     }
 
     private inner class cloudAnchorUploadedListener: CloudAnchorHandler.CloudAnchorListener {

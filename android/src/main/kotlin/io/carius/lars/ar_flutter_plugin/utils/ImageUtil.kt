@@ -8,6 +8,31 @@ import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 
 class ImageUtil {
+    fun yuvToJpegByteArray(yuvImage: Image): ByteArray {
+        val width = yuvImage.width
+        val height = yuvImage.height
+
+        val yBuffer = yuvImage.planes[0].buffer
+        val uBuffer = yuvImage.planes[1].buffer
+        val vBuffer = yuvImage.planes[2].buffer
+
+        val ySize = yBuffer.remaining()
+        val uSize = uBuffer.remaining()
+        val vSize = vBuffer.remaining()
+
+        val nv21 = ByteArray(ySize + uSize + vSize)
+
+        yBuffer.get(nv21, 0, ySize)
+        vBuffer.get(nv21, ySize, vSize)
+        uBuffer.get(nv21, ySize + vSize, uSize)
+
+        val yuv = YuvImage(nv21, ImageFormat.NV21, width, height, null)
+        val out = ByteArrayOutputStream()
+        yuv.compressToJpeg(Rect(0, 0, width, height), 90, out) // can adjust the quality here
+        return out.toByteArray()
+    }
+
+
     fun imageToByteArray(image: Image): ByteArray? {
         var data: ByteArray? = null
         if (image.format == ImageFormat.YUV_420_888) {
