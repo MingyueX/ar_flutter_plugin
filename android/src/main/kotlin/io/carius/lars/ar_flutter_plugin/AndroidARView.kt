@@ -33,7 +33,6 @@ import io.flutter.plugin.platform.PlatformView
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.FloatBuffer
-import java.nio.ByteBuffer
 import java.util.concurrent.CompletableFuture
 import com.chaquo.python.Python
 import com.chaquo.python.PyObject
@@ -1048,16 +1047,11 @@ internal class AndroidARView(
 
             val depthImage: Image = arFrame.acquireDepthImage16Bits()
             val array = DepthImgUtil().parseImg(depthImage)
-            val buffer = ByteBuffer.allocate(8 * array.dBuffer.size)
-            for (value in array.dBuffer) {
-                buffer.putDouble(value.toDouble())
-            }
-            val byteArray = buffer.array()
 
             if (depthImage != null && cameraImage != null) {
                 val python = Python.getInstance()
                 val pythonModule = python.getModule("improc_depth_evaluator")
-                val pyResult: PyObject = pythonModule.callAttr("run", byteArray , bytes, cameraImage.width, cameraImage.height, depthImage.width, depthImage.height)
+                val pyResult: PyObject = pythonModule.callAttr("run", array.dBuffer.toList(), bytes, cameraImage.width, cameraImage.height, depthImage.width, depthImage.height)
                 val result: Double = pyResult.toDouble()
                 sessionManagerChannel.invokeMethod("imageData", result)
             }
