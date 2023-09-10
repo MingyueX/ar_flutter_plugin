@@ -100,7 +100,7 @@ internal class AndroidARView(
     private val imageUtil = ImageUtil()
     private val depthImgUtil = DepthImgUtil()
     private val python = Python.getInstance()
-    private val pythonModule = python.getModule("improc_depth_evaluator")
+    private val pythonModule = python.getModule("box_processor")
 
     private val imageFetchingScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -1058,31 +1058,24 @@ internal class AndroidARView(
             }
 
             var cameraImage: Image? = null
-            var depthImage: Image? = null
 
             try {
                 cameraImage = arFrame.acquireCameraImage()
                 val bytes = imageUtil.yuvToJpegByteArray(cameraImage) ?: byteArrayOf()
 
-                depthImage = arFrame.acquireDepthImage16Bits()
-                val array = depthImgUtil.parseImg(depthImage)
-
-                if (depthImage != null && cameraImage != null) {
+                if (cameraImage != null) {
                     withContext(Dispatchers.Default) {
-                        val pyResult: PyObject = pythonModule.callAttr("run", array.dBuffer.toList(), bytes, cameraImage.width, cameraImage.height, depthImage.width, depthImage.height)
+                        val pyResult: PyObject = pythonModule.callAttr("get_ratio_inside_box", bytes)
                         val result: Double = pyResult.toDouble()
                         withContext(Dispatchers.Main) {
                             sessionManagerChannel.invokeMethod("imageData", result)
                         }
                     }
                 }
-            } catch (e: NotYetAvailableException) {
-                Log.e("ARCore", "Depth data not available yet.")
             } catch (e: DeadlineExceededException) {
                 Log.e("ARCore", "Deadline exceeded when trying to acquire resources.")
             } finally {
                 cameraImage?.close()
-                depthImage?.close()
             }
 
             delay(1000 / 30) // for ~30fps
