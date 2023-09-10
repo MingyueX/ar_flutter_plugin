@@ -102,7 +102,7 @@ internal class AndroidARView(
     private val python = Python.getInstance()
     private val pythonModule = python.getModule("improc_depth_evaluator")
 
-    private val imageFetchingScope = CoroutineScope(Dispatchers.IO)
+    private val imageFetchingScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     private lateinit var sceneUpdateListener: com.google.ar.sceneform.Scene.OnUpdateListener
     private lateinit var onNodeTapListener: com.google.ar.sceneform.Scene.OnPeekTouchListener
@@ -1050,7 +1050,7 @@ internal class AndroidARView(
     }
 
     suspend fun fetchImages() {
-        while (isActive) {
+        while (imageFetchingScope.isActive) {
             val arFrame = arSceneView.arFrame
             if (arFrame == null || arFrame.camera.trackingState != TrackingState.TRACKING) {
                 delay(1000 / 30) // for ~30fps
