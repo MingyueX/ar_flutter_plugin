@@ -1077,6 +1077,8 @@ internal class AndroidARView(
             } catch (e: NotYetAvailableException) {
                 // This means that depth data is not available yet.
                 Log.e("ARCore", "Depth data not available yet.")
+            } catch (e: DeadlineExceededException) {
+                Log.e("ARCore", "Deadline exceeded when trying to acquire depth image.")
             }
 
             cameraImage.close()
