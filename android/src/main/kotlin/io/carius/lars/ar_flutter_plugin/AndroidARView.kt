@@ -1057,11 +1057,14 @@ internal class AndroidARView(
                 continue
             }
 
-            val cameraImage: Image = arFrame.acquireCameraImage()
-            val bytes = imageUtil.yuvToJpegByteArray(cameraImage) ?: byteArrayOf()
+            var cameraImage: Image? = null
+            var depthImage: Image? = null
 
             try {
-                val depthImage: Image = arFrame.acquireDepthImage16Bits()
+                cameraImage = arFrame.acquireCameraImage()
+                val bytes = imageUtil.yuvToJpegByteArray(cameraImage) ?: byteArrayOf()
+
+                depthImage = arFrame.acquireDepthImage16Bits()
                 val array = depthImgUtil.parseImg(depthImage)
 
                 if (depthImage != null && cameraImage != null) {
@@ -1073,15 +1076,15 @@ internal class AndroidARView(
                         }
                     }
                 }
-                depthImage.close()
             } catch (e: NotYetAvailableException) {
-                // This means that depth data is not available yet.
                 Log.e("ARCore", "Depth data not available yet.")
             } catch (e: DeadlineExceededException) {
-                Log.e("ARCore", "Deadline exceeded when trying to acquire depth image.")
+                Log.e("ARCore", "Deadline exceeded when trying to acquire resources.")
+            } finally {
+                cameraImage?.close()
+                depthImage?.close()
             }
 
-            cameraImage.close()
             delay(1000 / 30) // for ~30fps
         }
     }
