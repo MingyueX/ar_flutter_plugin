@@ -1056,6 +1056,9 @@ internal class AndroidARView(
                 sessionManagerChannel.invokeMethod("imageData", result)
             }
             imageStreamHandler.postDelayed(this, 1000 / 30) // for ~30fps
+
+            cameraImage.close()
+            depthImage.close()
         }
     }
 
