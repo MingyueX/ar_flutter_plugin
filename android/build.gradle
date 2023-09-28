@@ -40,7 +40,6 @@ android {
             abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
         }
         python {
-            buildPython "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3"
             pip {
                 install "numpy"
                 install "pillow"
