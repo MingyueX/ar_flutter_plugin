@@ -21,4 +21,12 @@ class DepthImgArrays {
       length: map['length'],
     );
   }
+  
+  Map<String, dynamic> toJson() => {
+    'xBuffer': xBuffer,
+    'yBuffer': yBuffer,
+    'dBuffer': dBuffer,
+    'percentageBuffer': percentageBuffer,
+    'length': length,
+  };
 }
