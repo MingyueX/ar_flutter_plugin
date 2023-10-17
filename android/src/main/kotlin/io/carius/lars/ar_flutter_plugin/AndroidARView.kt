@@ -650,7 +650,7 @@ internal class AndroidARView(
                 }
             }
 
-            if(progressIncrement >= 100) {
+            if(trackingProgress >= 100) {
                 val view = activity.findViewById(R.id.content) as ViewGroup
                 view.removeView(animatedGuide)
                 showAnimatedGuide = false
