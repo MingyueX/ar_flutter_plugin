@@ -645,7 +645,7 @@ internal class AndroidARView(
         if (showAnimatedGuide && arSceneView.arFrame != null && trackingProgress < 100) {
             for (plane in arSceneView.arFrame!!.getUpdatedTrackables(Plane::class.java)) {
                 if (plane.trackingState === TrackingState.TRACKING) {
-                    trackingProgress += 10
+                    trackingProgress += 5
                     sessionManagerChannel.invokeMethod("motionData", trackingProgress)
                 }
             }
