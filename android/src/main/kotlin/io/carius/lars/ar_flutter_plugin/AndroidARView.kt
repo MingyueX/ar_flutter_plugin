@@ -104,6 +104,8 @@ internal class AndroidARView(
 
     private val imageFetchingScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
+    private var trackingProgress = 0
+
     private lateinit var sceneUpdateListener: com.google.ar.sceneform.Scene.OnUpdateListener
     private lateinit var onNodeTapListener: com.google.ar.sceneform.Scene.OnPeekTouchListener
 
@@ -640,14 +642,18 @@ internal class AndroidARView(
 
     private fun onFrame(frameTime: FrameTime) {
         // hide instructions view if no longer required
-        if (showAnimatedGuide && arSceneView.arFrame != null){
+        if (showAnimatedGuide && arSceneView.arFrame != null && trackingProgress < 100) {
             for (plane in arSceneView.arFrame!!.getUpdatedTrackables(Plane::class.java)) {
                 if (plane.trackingState === TrackingState.TRACKING) {
-                    val view = activity.findViewById(R.id.content) as ViewGroup
-                    view.removeView(animatedGuide)
-                    showAnimatedGuide = false
-                    break
+                    trackingProgress += 10
+                    sessionManagerChannel.invokeMethod("motionData", trackingProgress)
                 }
+            }
+
+            if(progressIncrement >= 100) {
+                val view = activity.findViewById(R.id.content) as ViewGroup
+                view.removeView(animatedGuide)
+                showAnimatedGuide = false
             }
         }
 

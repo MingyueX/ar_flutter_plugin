@@ -34,7 +34,10 @@ class ARSessionManager {
   late ARHitResultHandler onPlaneOrPointTap;
 
   /// Stream of depth images
-  static final StreamController<double> _imageStreamController = StreamController<double>.broadcast();
+  static StreamController<double>? _imageStreamController;
+
+  /// Stream of motion progress updates
+  static StreamController<int>? _progressController;
 
   ARSessionManager(int id, this.buildContext, this.planeDetectionConfig,
       {this.debug = false}) {
@@ -139,10 +142,28 @@ class ARSessionManager {
   /// Stops depth images stream
   void stopFetchingImages() {
     _channel.invokeMethod('stopFetchingImages');
+    _imageStreamController?.close();
+    _imageStreamController = null;
   }
 
   /// Returns the depth image stream for listening
-  Stream<double> get depthQualityStream => _imageStreamController.stream;
+  Stream<double> get depthQualityStream {
+    _imageStreamController ??= StreamController<double>.broadcast();
+    return _imageStreamController!.stream;
+  }
+
+  /// Stops motion progress stream
+  void stopMotionUpdates() {
+    _channel.invokeMethod('stopMotionUpdates');
+    _progressController?.close();
+    _progressController = null;
+  }
+
+  /// Returns the motion progress stream for listening
+  Stream<int> get motionUpdatesStream {
+    _progressController ??= StreamController<int>.broadcast();
+    return _progressController!.stream;
+  }
 
   Future<void> _platformCallHandler(MethodCall call) {
     if (debug) {
@@ -174,7 +195,11 @@ class ARSessionManager {
           break;
         case 'imageData':
           double imageQuality = call.arguments as double;
-          _imageStreamController.add(imageQuality);
+          _imageStreamController?.add(imageQuality);
+          break;
+        case 'motionData':
+          int motionProgress = call.arguments as int;
+          _progressController?.add(motionProgress);
           break;
         default:
           if (debug) {
@@ -228,7 +253,10 @@ class ARSessionManager {
   dispose() async {
     try {
       await _channel.invokeMethod<void>("dispose");
-      _imageStreamController.close();
+      _imageStreamController?.close();
+      _imageStreamController = null;
+      _progressController?.close();
+      _progressController = null;
     } catch (e) {
       print(e);
     }
